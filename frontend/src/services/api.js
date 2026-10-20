@@ -1,4 +1,20 @@
-const API_BASE = import.meta.env.VITE_API_BASE || '/api';
+function resolveApiBase() {
+  const envBase = import.meta.env.VITE_API_BASE;
+  if (envBase && typeof envBase === 'string' && envBase.trim().length > 0) {
+    let clean = envBase.trim().replace(/\/+$/, '');
+    if (!clean.endsWith('/api')) {
+      clean += '/api';
+    }
+    return clean;
+  }
+  // If deployed in production without env var, default directly to the live Render backend
+  if (typeof window !== 'undefined' && window.location.hostname && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
+    return 'https://account-recovery-i7mr.onrender.com/api';
+  }
+  return '/api';
+}
+
+const API_BASE = resolveApiBase();
 
 async function handleResponse(res) {
   const data = await res.json().catch(() => ({}));
