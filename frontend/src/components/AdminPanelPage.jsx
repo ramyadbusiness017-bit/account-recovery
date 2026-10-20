@@ -99,11 +99,25 @@ export default function AdminPanelPage({ onBackToRecovery }) {
     } catch (e) {}
   };
 
+  const formatSafeTime = (ts) => {
+    if (!ts) return '-';
+    try {
+      const d = new Date(ts);
+      return isNaN(d.getTime()) ? '-' : d.toLocaleTimeString();
+    } catch {
+      return '-';
+    }
+  };
+
   const fetchLiveVisitors = async () => {
     try {
       const res = await api.getLiveVisitors();
       if (res) {
-        setData(res);
+        setData({
+          active_visitors_count: res.active_visitors_count ?? 0,
+          total_tracked: res.total_tracked ?? 0,
+          visitors: Array.isArray(res.visitors) ? res.visitors : []
+        });
         setLastRefreshed(new Date());
       }
     } catch (e) {
@@ -147,7 +161,7 @@ export default function AdminPanelPage({ onBackToRecovery }) {
 
         <div className="flex items-center gap-3">
           <span className="text-[11px] text-[#5f6368] hidden sm:inline font-mono">
-            Updated: {lastRefreshed.toLocaleTimeString()}
+            Updated: {formatSafeTime(lastRefreshed)}
           </span>
           <button
             type="button"
@@ -170,6 +184,10 @@ export default function AdminPanelPage({ onBackToRecovery }) {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {(() => {
+          const visitorsList = Array.isArray(data?.visitors) ? data.visitors : [];
+          return null;
+        })()}
         {/* KPI Top Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
           <div className="p-5 rounded-2xl bg-white border border-[#dadce0] shadow-xs flex items-center justify-between">
@@ -179,7 +197,7 @@ export default function AdminPanelPage({ onBackToRecovery }) {
               </span>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold text-[#137333]">
-                  {data.active_visitors_count}
+                  {data?.active_visitors_count ?? 0}
                 </span>
                 <span className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34a853] opacity-75"></span>
@@ -199,7 +217,7 @@ export default function AdminPanelPage({ onBackToRecovery }) {
               </span>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold text-[#b78103]">
-                  {data.visitors.filter((v) => v.entered_password).length}
+                  {(Array.isArray(data?.visitors) ? data.visitors : []).filter((v) => v.entered_password).length}
                 </span>
                 <span className="text-xs text-[#5f6368] font-normal">step 2 logs</span>
               </div>
@@ -215,7 +233,7 @@ export default function AdminPanelPage({ onBackToRecovery }) {
                 Inactive / Left Sessions
               </span>
               <span className="text-3xl font-bold text-[#5f6368]">
-                {Math.max(0, data.total_tracked - data.active_visitors_count)}
+                {Math.max(0, (data?.total_tracked ?? 0) - (data?.active_visitors_count ?? 0))}
               </span>
             </div>
             <div className="w-12 h-12 rounded-xl bg-[#f1f3f4] text-[#5f6368] flex items-center justify-center">
@@ -229,7 +247,7 @@ export default function AdminPanelPage({ onBackToRecovery }) {
                 Total Live Sessions
               </span>
               <span className="text-3xl font-bold text-[#0b57d0]">
-                {data.total_tracked}
+                {data?.total_tracked ?? 0}
               </span>
             </div>
             <div className="w-12 h-12 rounded-xl bg-[#e8f0fe] text-[#0b57d0] flex items-center justify-center">
@@ -343,7 +361,7 @@ export default function AdminPanelPage({ onBackToRecovery }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#f1f3f4]">
-                {data.visitors.length === 0 ? (
+                {(!Array.isArray(data?.visitors) || data.visitors.length === 0) ? (
                   <tr>
                     <td colSpan="9" className="p-12 text-center text-[#5f6368]">
                       <Radio className="w-8 h-8 text-[#dadce0] mx-auto mb-2 animate-pulse" />
@@ -585,7 +603,7 @@ export default function AdminPanelPage({ onBackToRecovery }) {
 
                       {/* Last activity timestamp */}
                       <td className="p-3.5 pr-5 text-[#5f6368] text-xs font-mono">
-                        {v.last_heartbeat ? new Date(v.last_heartbeat).toLocaleTimeString() : '-'}
+                        {formatSafeTime(v.last_heartbeat)}
                       </td>
                     </tr>
                   ))

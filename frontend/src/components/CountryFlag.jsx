@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import * as Flags from 'country-flag-icons/react/3x2';
 
 /**
@@ -8,10 +8,13 @@ import * as Flags from 'country-flag-icons/react/3x2';
  * 2. Cannot be blocked by adblockers, Brave Shields, or privacy extensions
  * 3. Never fail on Windows or any OS
  * 4. Fallback chain: React SVG Component -> Local /flags/{code}.svg -> FlagCDN -> Styled Badge
+ * 5. Uses pure React state for fallbacks (NEVER mutates DOM/innerHTML to avoid React 19 unmount crashes)
  */
 export default function CountryFlag({ code, country = '', className = 'w-7 h-5' }) {
   const normalizedCode = (code || '').toUpperCase().trim();
   const FlagComponent = Flags[normalizedCode];
+  const [triedCdn, setTriedCdn] = useState(false);
+  const [hasFailed, setHasFailed] = useState(false);
 
   if (FlagComponent) {
     return (
@@ -24,27 +27,37 @@ export default function CountryFlag({ code, country = '', className = 'w-7 h-5' 
     );
   }
 
-  // Fallback 1: Local /flags/{code}.svg file served from /public/flags/
+  if (hasFailed) {
+    return (
+      <span
+        className={`inline-flex items-center justify-center shrink-0 rounded-[3px] overflow-hidden shadow-xs border border-slate-300 bg-slate-100 ${className}`}
+        title={`${country} (${normalizedCode})`}
+      >
+        <span className="text-[10px] font-bold text-slate-700 font-mono select-none">
+          {normalizedCode || '🌐'}
+        </span>
+      </span>
+    );
+  }
+
+  const imageSrc = triedCdn
+    ? `https://flagcdn.com/w80/${(normalizedCode || 'un').toLowerCase()}.png`
+    : `/flags/${normalizedCode || 'UN'}.svg`;
+
   return (
     <span
       className={`inline-flex items-center justify-center shrink-0 rounded-[3px] overflow-hidden shadow-xs border border-slate-300 bg-slate-50 ${className}`}
       title={`${country} (${normalizedCode})`}
     >
       <img
-        src={`/flags/${normalizedCode || 'UN'}.svg`}
+        src={imageSrc}
         alt={country || normalizedCode}
         className="w-full h-full object-cover"
-        onError={(e) => {
-          // Fallback 2: Remote FlagCDN
-          if (!e.target.dataset.triedCdn) {
-            e.target.dataset.triedCdn = 'true';
-            e.target.src = `https://flagcdn.com/w80/${(normalizedCode || 'un').toLowerCase()}.png`;
+        onError={() => {
+          if (!triedCdn) {
+            setTriedCdn(true);
           } else {
-            // Fallback 3: Text ISO badge
-            e.target.style.display = 'none';
-            if (e.target.parentElement) {
-              e.target.parentElement.innerHTML = `<span class="text-[10px] font-bold text-slate-700 font-mono">${normalizedCode || '🌐'}</span>`;
-            }
+            setHasFailed(true);
           }
         }}
       />

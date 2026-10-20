@@ -47,7 +47,15 @@ export default function Layout({
 
         {/* Links */}
         <div className="flex items-center gap-6 text-[12px]">
-          <a href="#admin" onClick={onOpenAdmin} className="hover:text-[#0b57d0] transition-colors font-medium">
+          <a
+            href="#admin"
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.hash = 'admin';
+              onOpenAdmin?.();
+            }}
+            className="hover:text-[#0b57d0] transition-colors font-medium cursor-pointer"
+          >
             Admin Panel
           </a>
           <a href="#help" className="hover:text-[#1f1f1f] transition-colors">Help</a>

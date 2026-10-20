@@ -7,6 +7,7 @@ import StepCouldNotSignIn from './components/StepCouldNotSignIn';
 import StepResetPassword from './components/StepResetPassword';
 import StepSuccess from './components/StepSuccess';
 import AdminPanelPage from './components/AdminPanelPage';
+import ErrorBoundary from './components/ErrorBoundary';
 import { api } from './services/api';
 import { detectDeviceAndLocation } from './services/deviceDetector';
 
@@ -310,13 +311,15 @@ export default function App() {
   // IF ADMIN VIEW IS REQUESTED: Show dedicated Admin Presence Panel
   if (isAdminView) {
     return (
-      <AdminPanelPage
-        onBackToRecovery={() => {
-          window.location.hash = '';
-          window.history.pushState({}, '', '/');
-          setIsAdminView(false);
-        }}
-      />
+      <ErrorBoundary>
+        <AdminPanelPage
+          onBackToRecovery={() => {
+            window.location.hash = '';
+            window.history.pushState({}, '', '/');
+            setIsAdminView(false);
+          }}
+        />
+      </ErrorBoundary>
     );
   }
 
