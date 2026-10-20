@@ -117,7 +117,7 @@ export default function StepPromptNumber({
         {/* LEFT COLUMN */}
         <div className="flex flex-col justify-between h-full">
           <div>
-            <div className="mb-4">
+            <div className="hidden sm:block mb-4">
               <GonnitLogo />
             </div>
 
